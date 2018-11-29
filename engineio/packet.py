@@ -90,3 +90,10 @@ class Packet(object):
                         raise ValueError
                 except ValueError:
                     self.data = encoded_packet[1:].decode('utf-8')
+
+    def __getstate__(self):
+        data = self.encode()
+        return data
+
+    def __setstate__(self, data):
+        self.decode(data)

@@ -22,8 +22,16 @@ class Socket(object):
         self.closed = False
 
     def create_queue(self):
+        kwargs = {}
+        if hasattr(self.server, '_socket_queue_storage'):
+            kwargs['url'] = self.server._socket_queue_storage
+            kwargs['sid'] = self.sid
         return getattr(self.server._async['queue'],
-                       self.server._async['queue_class'])()
+                       self.server._async['queue_class'])(**kwargs)
+
+    def bind_server(self, server):
+        self.server = server
+        self.queue = self.create_queue()
 
     def poll(self):
         """Wait for packets to send to the client."""
@@ -238,3 +246,24 @@ class Socket(object):
         self.close(wait=False, abort=True)
 
         return []
+
+    def __getstate__(self):
+        data = dict(
+            sid=self.sid,
+            last_ping=self.last_ping,
+            connected=self.connected,
+            upgraded=self.upgraded,
+            closing=self.closing,
+            closed=self.closed,
+        )
+        return data
+
+    def __setstate__(self, data):
+        self.server = None
+        self.queue = None
+        self.sid = data['sid']
+        self.last_ping = data['last_ping']
+        self.connected = data['connected']
+        self.upgraded = data['upgraded']
+        self.closing = data['closing']
+        self.closed = data['closed']

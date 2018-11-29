@@ -106,7 +106,7 @@ class AsyncServer(server.Server):
         else:
             await asyncio.wait([client.close()
                                 for client in six.itervalues(self.sockets)])
-            self.sockets = {}
+            self.sockets.clear()
 
     async def handle_request(self, *args, **kwargs):
         """Handle an HTTP request from the client.
@@ -265,6 +265,8 @@ class AsyncServer(server.Server):
             return ret
         else:
             s.connected = True
+            if self._remote_state:
+                self.sockets[sid] = s
             headers = None
             if self.cookie:
                 headers = [('Set-Cookie', self.cookie + '=' + sid)]
@@ -323,7 +325,7 @@ class AsyncServer(server.Server):
 
             try:
                 # iterate over the current clients
-                for socket in self.sockets.copy().values():
+                for socket in dict(self.sockets).copy().values():
                     if not socket.closing and not socket.closed:
                         await socket.check_ping_timeout()
                     await self.sleep(sleep_interval)

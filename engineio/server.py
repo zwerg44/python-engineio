@@ -11,6 +11,8 @@ from . import exceptions
 from . import packet
 from . import payload
 from . import socket
+from . import redis_queue
+from .stored_dict import stored_dict
 
 default_logger = logging.getLogger('engineio')
 
@@ -68,6 +70,15 @@ class Server(object):
                             inactive clients are closed. Set to ``False`` to
                             disable the monitoring task (not recommended). The
                             default is ``True``.
+    :param state_storage: A connection URL to internal state storage,
+                          can be used to get rid of sticky sessions,
+                          can cause performance drawback while using polling transport,
+                          ``redis://`` - supported only
+                          NOTE: this parameter is Experimental
+    :param socket_queue_storage: A connection URL to socket_queue storage
+                                 can be used to get rid of sticky sessions,
+                                 can cause performance drawback while using polling transport,
+                                 NOTE: this parameter is Experimental
     :param kwargs: Reserved for future extensions, any additional parameters
                    given as keyword arguments will be silently ignored.
     """
@@ -80,7 +91,8 @@ class Server(object):
                  http_compression=True, compression_threshold=1024,
                  cookie='io', cors_allowed_origins=None,
                  cors_credentials=True, logger=False, json=None,
-                 async_handlers=True, monitor_clients=None, **kwargs):
+                 async_handlers=True, monitor_clients=None,
+                 state_storage=None, socket_queue_storage=None, **kwargs):
         self.ping_timeout = ping_timeout
         self.ping_interval = ping_interval
         self.max_http_buffer_size = max_http_buffer_size
@@ -91,7 +103,12 @@ class Server(object):
         self.cors_allowed_origins = cors_allowed_origins
         self.cors_credentials = cors_credentials
         self.async_handlers = async_handlers
-        self.sockets = {}
+        if state_storage:
+            self._remote_state = True
+            self.sockets = stored_dict(url=state_storage, key='sockets', server=self)
+        else:
+            self._remote_state = False
+            self.sockets = {}
         self.handlers = {}
         self.start_service_task = monitor_clients \
             if monitor_clients is not None else self._default_monitor_clients
@@ -137,6 +154,10 @@ class Server(object):
                 self._async['asyncio']:  # pragma: no cover
             raise ValueError('The selected async_mode requires asyncio and '
                              'must use the AsyncServer class')
+        if state_storage and socket_queue_storage:
+            self._async['queue'] = redis_queue
+            self._async['queue_class'] = 'RedisQueue'
+            self._socket_queue_storage = socket_queue_storage
         self.logger.info('Server initialized for %s.', self.async_mode)
 
     def is_asyncio_based(self):
@@ -225,7 +246,7 @@ class Server(object):
         else:
             for client in six.itervalues(self.sockets):
                 client.close()
-            self.sockets = {}
+            self.sockets.clear()
 
     def transport(self, sid):
         """Return the name of the transport used by the client.
@@ -396,6 +417,8 @@ class Server(object):
             return ret
         else:
             s.connected = True
+            if self._remote_state:
+                self.sockets[sid] = s
             headers = None
             if self.cookie:
                 headers = [('Set-Cookie', self.cookie + '=' + sid)]
@@ -523,7 +546,7 @@ class Server(object):
 
             try:
                 # iterate over the current clients
-                for s in self.sockets.copy().values():
+                for s in dict(self.sockets).copy().values():
                     if not s.closing and not s.closed:
                         s.check_ping_timeout()
                     self.sleep(sleep_interval)
