@@ -1,7 +1,10 @@
 import six
-import redis
 import pickle
 import logging
+try:
+    import redis
+except ImportError:
+    redis = None
 try:
     import collections.abc as collections_abc
 except ImportError:

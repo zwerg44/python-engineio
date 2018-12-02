@@ -1,7 +1,10 @@
 import sys
 import time
-import redis
 import pickle
+try:
+    import redis
+except ImportError:
+    redis = None
 from . import exceptions
 from . import packet
 
