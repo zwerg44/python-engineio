@@ -23,8 +23,8 @@ class Socket(object):
 
     def create_queue(self):
         kwargs = {}
-        if hasattr(self.server, '_socket_queue_storage'):
-            kwargs['url'] = self.server._socket_queue_storage
+        if self.server._remote_state:
+            kwargs['url'] = self.server._state_storage_url
             kwargs['sid'] = self.sid
         return getattr(self.server._async['queue'],
                        self.server._async['queue_class'])(**kwargs)

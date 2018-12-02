@@ -16,13 +16,12 @@ Empty = __queue__.Empty
 class RedisQueue(object):
     """Simple Queue with Redis Backend"""
     def __init__(self, sid, url):
-        self.key = 'queue:%s' %sid
-        self.__db = redis.Redis.from_url(url)
-        self.__empty_blocked = False
+        self.key = 'queue:%s' % sid
+        self.redis = redis.StrictRedis.from_url(url)
 
     def qsize(self):
         """Return the approximate size of the queue."""
-        return self.__db.llen(self.key)
+        return self.redis.llen(self.key)
 
     def empty(self):
         """Return True if the queue is empty, False otherwise."""
@@ -31,7 +30,7 @@ class RedisQueue(object):
     def put(self, item):
         """Put item into the queue."""
         pickled = pickle.dumps(item, protocol=pickle.HIGHEST_PROTOCOL)
-        self.__db.rpush(self.key, pickled)
+        self.redis.rpush(self.key, pickled)
 
     def get(self, block=True, timeout=None):
         """
@@ -41,13 +40,13 @@ class RedisQueue(object):
         """
         if block:
             try:
-                item = self.__db.blpop(self.key, timeout=timeout)
+                item = self.redis.blpop(self.key, timeout=timeout)
             except redis.TimeoutError:
                 raise Empty
             if item:
                 item = item[1]
         else:
-            item = self.__db.lpop(self.key)
+            item = self.redis.lpop(self.key)
             if item is None:
                 raise Empty
 
