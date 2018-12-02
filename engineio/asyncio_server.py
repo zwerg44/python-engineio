@@ -265,8 +265,6 @@ class AsyncServer(server.Server):
             return ret
         else:
             s.connected = True
-            if self._remote_state:
-                self.sockets[sid] = s
             headers = None
             if self.cookie:
                 headers = [('Set-Cookie', self.cookie + '=' + sid)]
