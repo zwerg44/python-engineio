@@ -159,9 +159,6 @@ class Server(object):
             self._state_storage_url = state_storage
         self.logger.info('Server initialized for %s.', self.async_mode)
 
-    def has_remote_state(self):
-        return self._remote_state
-
     def is_asyncio_based(self):
         return False
 
@@ -548,7 +545,7 @@ class Server(object):
 
             try:
                 # iterate over the current clients
-                for s in dict(self.sockets).copy().values():
+                for s in self.sockets.copy().values():
                     if not s.closing and not s.closed:
                         s.check_ping_timeout()
                     self.sleep(sleep_interval)

@@ -325,7 +325,7 @@ class AsyncServer(server.Server):
 
             try:
                 # iterate over the current clients
-                for socket in dict(self.sockets).copy().values():
+                for socket in self.sockets.copy().values():
                     if not socket.closing and not socket.closed:
                         await socket.check_ping_timeout()
                     await self.sleep(sleep_interval)

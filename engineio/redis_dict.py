@@ -205,7 +205,7 @@ class RedisDict(collections_abc.MutableMapping):
         if kwargs:
             self._update_helper(kwargs)
 
-    def copy(self, key=None):
+    def copy(self):
         return dict(self).copy()
 
     def clear(self):
