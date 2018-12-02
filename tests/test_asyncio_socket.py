@@ -51,6 +51,7 @@ class TestSocket(unittest.TestCase):
         mock_server.ping_timeout = 0.2
         mock_server.ping_interval = 0.2
         mock_server.async_handlers = False
+        mock_server._remote_state = False
         mock_server._async = {'asyncio': True,
                               'create_route': mock.MagicMock(),
                               'translate_request': mock.MagicMock(),
