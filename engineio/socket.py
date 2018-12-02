@@ -50,7 +50,7 @@ class Socket(object):
                 break
         return packets
 
-    def receive(self, pkt):
+    def receive(self, pkt, environ=None):
         """Receive packet from the client."""
         packet_name = packet.packet_names[pkt.packet_type] \
             if pkt.packet_type < len(packet.packet_names) else 'UNKNOWN'
@@ -63,7 +63,7 @@ class Socket(object):
             self.send(packet.Packet(packet.PONG, pkt.data))
         elif pkt.packet_type == packet.MESSAGE:
             self.server._trigger_event('message', self.sid, pkt.data,
-                                       run_async=self.server.async_handlers)
+                                       run_async=self.server.async_handlers, environ=environ)
         elif pkt.packet_type == packet.UPGRADE:
             self.send(packet.Packet(packet.NOOP))
         elif pkt.packet_type == packet.CLOSE:
@@ -126,7 +126,7 @@ class Socket(object):
             body = environ['wsgi.input'].read(length)
             p = payload.Payload(encoded_payload=body)
             for pkt in p.packets:
-                self.receive(pkt)
+                self.receive(pkt, environ=environ)
 
     def close(self, wait=True, abort=False):
         """Close the socket connection."""

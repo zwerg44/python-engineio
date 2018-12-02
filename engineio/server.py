@@ -439,10 +439,10 @@ class Server(object):
         run_async = kwargs.pop('run_async', False)
         if event in self.handlers:
             if run_async:
-                return self.start_background_task(self.handlers[event], *args)
+                return self.start_background_task(self.handlers[event], *args, **kwargs)
             else:
                 try:
-                    return self.handlers[event](*args)
+                    return self.handlers[event](*args, **kwargs)
                 except:
                     self.logger.exception(event + ' handler error')
                     if event == 'connect':

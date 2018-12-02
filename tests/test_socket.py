@@ -88,7 +88,8 @@ class TestSocket(unittest.TestCase):
         s.receive(packet.Packet(packet.MESSAGE, data='foo'))
         mock_server._trigger_event.assert_called_once_with('message', 'sid',
                                                            'foo',
-                                                           run_async=True)
+                                                           run_async=True,
+                                                           environ=None)
 
     def test_message_sync_handler(self):
         mock_server = self._get_mock_server()
@@ -97,7 +98,8 @@ class TestSocket(unittest.TestCase):
         s.receive(packet.Packet(packet.MESSAGE, data='foo'))
         mock_server._trigger_event.assert_called_once_with('message', 'sid',
                                                            'foo',
-                                                           run_async=False)
+                                                           run_async=False,
+                                                           environ=None)
 
     def test_invalid_packet(self):
         mock_server = self._get_mock_server()
@@ -278,7 +280,7 @@ class TestSocket(unittest.TestCase):
         self.assertTrue(s.upgraded)
         self.assertEqual(mock_server._trigger_event.call_count, 2)
         mock_server._trigger_event.assert_has_calls([
-            mock.call('message', 'sid', 'foo', run_async=True),
+            mock.call('message', 'sid', 'foo', run_async=True, environ=None),
             mock.call('disconnect', 'sid', run_async=False)])
         ws.send.assert_called_with('4bar')
 
@@ -305,7 +307,7 @@ class TestSocket(unittest.TestCase):
         self.assertTrue(s.upgraded)
         self.assertEqual(mock_server._trigger_event.call_count, 2)
         mock_server._trigger_event.assert_has_calls([
-            mock.call('message', 'sid', 'foo', run_async=True),
+            mock.call('message', 'sid', 'foo', run_async=True, environ=None),
             mock.call('disconnect', 'sid', run_async=False)])
         ws.send.assert_called_with('4bar')
 
@@ -365,7 +367,7 @@ class TestSocket(unittest.TestCase):
         self.assertTrue(s.connected)
         self.assertEqual(mock_server._trigger_event.call_count, 2)
         mock_server._trigger_event.assert_has_calls([
-            mock.call('message', 'sid', foo, run_async=True),
+            mock.call('message', 'sid', foo, run_async=True, environ=None),
             mock.call('disconnect', 'sid', run_async=False)])
         ws.send.assert_called_with('4bar')
 

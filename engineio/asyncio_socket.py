@@ -30,7 +30,7 @@ class AsyncSocket(socket.Socket):
             pass
         return packets
 
-    async def receive(self, pkt):
+    async def receive(self, pkt, environ=None):
         """Receive packet from the client."""
         self.server.logger.info('%s: Received packet %s data %s',
                                 self.sid, packet.packet_names[pkt.packet_type],
@@ -42,7 +42,7 @@ class AsyncSocket(socket.Socket):
         elif pkt.packet_type == packet.MESSAGE:
             await self.server._trigger_event(
                 'message', self.sid, pkt.data,
-                run_async=self.server.async_handlers)
+                run_async=self.server.async_handlers, environ=environ)
         elif pkt.packet_type == packet.UPGRADE:
             await self.send(packet.Packet(packet.NOOP))
         elif pkt.packet_type == packet.CLOSE:
@@ -104,7 +104,7 @@ class AsyncSocket(socket.Socket):
             body = await environ['wsgi.input'].read(length)
             p = payload.Payload(encoded_payload=body)
             for pkt in p.packets:
-                await self.receive(pkt)
+                await self.receive(pkt, environ=environ)
 
     async def close(self, wait=True, abort=False):
         """Close the socket connection."""
