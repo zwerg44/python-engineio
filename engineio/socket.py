@@ -20,6 +20,7 @@ class Socket(object):
         self.upgraded = False
         self.closing = False
         self.closed = False
+        self._initialized = True
 
     def create_queue(self):
         kwargs = {}
@@ -32,6 +33,7 @@ class Socket(object):
     def bind_server(self, server):
         self.server = server
         self.queue = self.create_queue()
+        self._initialized = True
 
     def poll(self):
         """Wait for packets to send to the client."""
@@ -247,6 +249,13 @@ class Socket(object):
 
         return []
 
+    def __setattr__(self, name, value):
+        super(Socket, self).__setattr__(name, value)
+        # dump changes to redis
+        if hasattr(self, 'server') and self.server and self.server._remote_state:
+            if hasattr(self, '_initialized') and self._initialized and name not in ('server', 'queue', '_initialized'):
+                self.server.sockets[self.sid] = self
+
     def __getstate__(self):
         data = dict(
             sid=self.sid,
@@ -267,3 +276,4 @@ class Socket(object):
         self.upgraded = data['upgraded']
         self.closing = data['closing']
         self.closed = data['closed']
+        self._initialized = False
