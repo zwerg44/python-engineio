@@ -543,8 +543,9 @@ class Server(object):
 
             try:
                 # iterate over the current clients
-                for s in self.sockets.copy().values():
-                    if not s.closing and not s.closed:
+                for sid in self.sockets.copy().keys():
+                    s = self.sockets.get(sid)
+                    if s and not s.closing and not s.closed:
                         s.check_ping_timeout()
                     self.sleep(sleep_interval)
             except (SystemExit, KeyboardInterrupt):

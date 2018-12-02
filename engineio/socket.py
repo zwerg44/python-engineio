@@ -254,6 +254,7 @@ class Socket(object):
         # dump changes to redis
         if hasattr(self, 'server') and self.server and self.server._remote_state:
             if hasattr(self, '_initialized') and self._initialized and name not in ('server', 'queue', '_initialized'):
+                print('!! __setattr__', name, value)
                 self.server.sockets[self.sid] = self
 
     def __getstate__(self):
